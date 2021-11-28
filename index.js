@@ -1,6 +1,13 @@
 const express = require('express');
 const { MongoClient } = require('mongodb');
+const cors = require('cors');
+const { query } = require('express');
+
+
+// middle ware using 
 const app = express();
+app.use(cors());
+app.use(express.json());
 const port = process.env.PORT || 5000;
 
 // user : productDB password: cEGtL4uXO5FEcYGm
@@ -12,11 +19,25 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 async function run (){
     try{
         await client.connect();
-        console.log('database is connecting');
         // database name
         const database = client.db('product_shop');
         const productsCollection = database.collection('products');
 
+        // APP METHOD
+        app.post('/users',async(req,res) => {
+            const newProduct = req.body;
+            const result = await productsCollection.insertOne(newProduct);
+            console.log(result);
+            console.log(`A document was inserted with the _id: ${result.insertedId}`);
+            res.json(result);
+
+        });
+        
+        app.get('/users',async(req,res) => {
+            const cursor = productsCollection.find({});
+            const products = await cursor.toArray();
+            res.json(products);
+        })
     }
     finally{
         // await client.close();
@@ -24,8 +45,6 @@ async function run (){
 }
 
 run().catch(console.dir);
-
-console.log(uri);
 
 app.get('/',(req,res) => {
     res.send('Node js Server is running');
